@@ -3,48 +3,85 @@ import "./App.css";
 import axios from "axios";
 import { useState } from "react";
 
+const limit = 15;
 function App() {
   const [characters, setCharacters] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     fetchCharacters();
   }, []);
-  const fetchCharacters = async () => {
+
+  const fetchCharacters = async (page) => {
     const apiUrl = "https://narutodb.xyz/api/character";
-    const result = await axios.get(apiUrl);
+    setIsLoading(true);
+    const result = await axios.get(apiUrl, { params: { page, limit } });
     setCharacters(result.data.characters);
+    setIsLoading(false);
   };
+
+  const handleNext = async () => {
+    const nextPage = page + 1;
+    await fetchCharacters(nextPage);
+    setPage(nextPage);
+  };
+
+  const handlePrev = async () => {
+    const prevPage = page - 1;
+    await fetchCharacters(prevPage);
+    setPage(prevPage);
+  };
+
   return (
     <div className="container">
-      <main>
-        <div className="cards-container">
-          {characters.map((character) => {
-            return (
-              <div className="card" key={character.id}>
-                <img
-                  src={
-                    character.images[0] != null
-                      ? character.images[0]
-                      : "dummy.png"
-                  }
-                  alt="character"
-                  className="card-image"
-                />
-                <div className="card-content">
-                  <h3 className="card-title">{character.name}</h3>
-                  <p className="card-description">
-                    {character.debut?.appearsIn ?? "なし"}
-                  </p>
-                  <div className="card-footer">
-                    <span className="affiliation">
-                      {character.personal?.affiliation ?? "なし"}
-                    </span>
+      {isLoading ? (
+        <div>Now Loading...</div>
+      ) : (
+        <main>
+          <div className="cards-container">
+            {characters.map((character) => {
+              return (
+                <div className="card" key={character.id}>
+                  <img
+                    src={
+                      character.images[0] != null
+                        ? character.images[0]
+                        : "dummy.png"
+                    }
+                    alt="character"
+                    className="card-image"
+                  />
+                  <div className="card-content">
+                    <h3 className="card-title">{character.name}</h3>
+                    <p className="card-description">
+                      {character.debut?.appearsIn ?? "なし"}
+                    </p>
+                    <div className="card-footer">
+                      <span className="affiliation">
+                        {character.personal?.affiliation ?? "なし"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </main>
+              );
+            })}
+          </div>
+          <div className="pager">
+            <button className="prev" onClick={handlePrev} disabled={page === 1}>
+              Previous
+            </button>
+            <spna className="page-number">{page}</spna>
+            <button
+              className="next"
+              onClick={handleNext}
+              disabled={limit > characters.length}
+            >
+              Next
+            </button>
+          </div>
+        </main>
+      )}
     </div>
   );
 }
